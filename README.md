@@ -1,0 +1,1 @@
+This is the HTML file that can create the UI to use my code to retrieve stock data. I still have to fix some of the code because some of the calculations for time ranges do not provide the right answer.
