@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Information</h1>
+        <div class="input-group">
+            <label for="ticker">Stock Ticker:</label>
+            <input type="text" id="ticker" value="IBM">
+        </div>
+        <div class="input-group">
+            <label for="option">Choose an option:</label>
+            <select id="option">
+                <option value="1">View Open</option>
+                <option value="2">View Close</option>
+                <option value="3">View High</option>
+                <option value="4">View Low</option>
+                <option value="5">View Volume</option>
+                <option value="6">View Return</option>
+                <option value="7">View Value Premium</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="period">Choose a period:</label>
+            <select id="period">
+                <option value="year">Year</option>
+                <option value="month">Month</option>
+                <option value="day">Day</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="periodValue">Enter the period (e.g., 2023, 2023-10, 2023-10-28):</label>
+            <input type="text" id="periodValue">
+        </div>
+        <button onclick="getStockInfo()">Submit</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        async function getStockInfo() {
+            const ticker = document.getElementById('ticker').value;
+            const option = document.getElementById('option').value;
+            const period = document.getElementById('period').value;
+            const periodValue = document.getElementById('periodValue').value;
+            const apiKey = 'demo'; // Replace with your actual API key
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=full&apikey=${apiKey}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            const timeSeries = data['Time Series (Daily)'];
+            
+            let resultText = '';
+            let filteredData = Object.entries(timeSeries).filter(([date, _]) => date.includes(periodValue));
+            
+            if (filteredData.length === 0) {
+                resultText = 'No data available for the specified period.';
+            } else {
+                if (option == '1') {
+                    resultText = `Open: ${filteredData[0][1]['1. open']}`;
+                } else if (option == '2') {
+                    resultText = `Close: ${filteredData[filteredData.length - 1][1]['4. close']}`;
+                } else if (option == '3') {
+                    const highValues = filteredData.map(([_, values]) => parseFloat(values['2. high']));
+                    resultText = `High: ${Math.max(...highValues)}`;
+                } else if (option == '4') {
+                    const lowValues = filteredData.map(([_, values]) => parseFloat(values['3. low']));
+                    resultText = `Low: ${Math.min(...lowValues)}`;
+                } else if (option == '5') {
+                    const volumeValues = filteredData.map(([_, values]) => parseFloat(values['5. volume']));
+                    resultText = `Volume: ${volumeValues.reduce((a, b) => a + b, 0)}`;
+                } else if (option == '6') {
+                    const open = parseFloat(filteredData[0][1]['1. open']);
+                    const close = parseFloat(filteredData[filteredData.length - 1][1]['4. close']);
+                    resultText = `Return: ${(close - open).toFixed(2)}`;
+                } else if (option == '7') {
+                    const openValues = filteredData.map(([_, values]) => parseFloat(values['1. open']));
+                    resultText = `Value Premium: ${(Math.max(...openValues) - Math.min(...openValues)).toFixed(2)}`;
+                }
+            }
+            
+            document.getElementById('result').innerText = resultText;
+        }
+    </script>
+</body>
+</html>
